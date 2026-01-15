@@ -1,1 +1,187 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<title>Karigar Mitra Gujarat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAweAdzdGLi7cfweJHZ21LM8ZWGiE09kdk&libraries=geometry"></script>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#f2f5fb}
+header{background:#0d47a1;color:#fff;padding:15px;text-align:center;font-size:20px;font-weight:bold}
+.card{background:white;margin:10px;padding:15px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.btn{background:#0d47a1;color:white;border:none;padding:12px;border-radius:10px;width:100%;font-weight:bold}
+input,select{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cat{padding:18px;border-radius:12px;color:white;text-align:center;font-weight:bold}
+#map{width:100%;height:200px;border-radius:12px}
+.small{font-size:12px;color:#555}
+</style>
+</head>
+
+<body>
+
+<header>🛠️ Karigar Mitra – Gujarat</header>
+
+<div id="app">
+
+<div class="card" id="loginBox">
+<h3>📱 Login</h3>
+<input id="phone" placeholder="Mobile Number">
+<button class="btn" onclick="sendOTP()">Send OTP</button>
+<input id="otp" placeholder="Enter OTP">
+<button class="btn" onclick="verifyOTP()">Verify</button>
+</div>
+
+<div id="main" style="display:none">
+
+<div class="card">
+<h3>📍 Your Location</h3>
+<div id="map"></div>
+<p class="small" id="locTxt">Detecting…</p>
+</div>
+
+<div class="card">
+<h3>🧰 Services</h3>
+<div class="grid" id="cats"></div>
+</div>
+
+<div class="card" id="karigarReg" style="display:none">
+<h3>👨‍🔧 Karigar Registration</h3>
+<input id="kname" placeholder="Full Name">
+<select id="kcat"></select>
+<input type="file" id="kphoto">
+<button class="btn" onclick="registerKarigar()">Register</button>
+</div>
+
+<div class="card" id="adminPanel" style="display:none">
+<h3>👨‍💼 Admin Panel</h3>
+<div id="pending"></div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey: "AIzaSyCTk0sFvZmY6olGOHwK59z-TYoSSj8_l0o",
+authDomain: "karigar-mitra-9c6be.firebaseapp.com",
+projectId: "karigar-mitra-9c6be",
+storageBucket: "karigar-mitra-9c6be.firebasestorage.app",
+messagingSenderId: "929574636222",
+appId: "1:929574636222:web:085bb87b1d021e0c422cef"
+};
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+let recaptcha;
+
+const ADMIN = "7016563973";
+
+let userLat,userLng;
+
+const categories = [
+"ઇલેક્ટ્રિશિયન","પ્લમ્બર","AC રીપેર","CCTV","પેઇન્ટર","કાર્પેન્ટર",
+"મોબાઇલ રીપેર","લેપટોપ રીપેર","ટાઇલ્સ","સફાઈ","વેલ્ડર",
+"ગ્લાસ ફિટિંગ","મોટર મિકેનિક","બોરવેલ","જનરેટર","ફર્નિચર"
+];
+
+function loadCats(){
+categories.forEach(c=>{
+let d=document.createElement("div");
+d.className="cat";
+d.style.background="#"+Math.floor(Math.random()*16777215).toString(16);
+d.innerHTML=c;
+d.onclick=()=>alert("Booking "+c+" soon…");
+document.getElementById("cats").appendChild(d);
+
+let o=document.createElement("option");
+o.innerHTML=c;
+document.getElementById("kcat").appendChild(o);
+});
+}
+loadCats();
+
+function sendOTP(){
+recaptcha = new firebase.auth.RecaptchaVerifier('loginBox',{size:'invisible'});
+auth.signInWithPhoneNumber("+91"+phone.value,recaptcha).then(r=>{
+window.confirmationResult=r;
+alert("OTP Sent");
+});
+}
+
+function verifyOTP(){
+confirmationResult.confirm(otp.value).then(res=>{
+document.getElementById("loginBox").style.display="none";
+document.getElementById("main").style.display="block";
+
+if(res.user.phoneNumber.includes(ADMIN)){
+document.getElementById("adminPanel").style.display="block";
+loadPending();
+}else{
+document.getElementById("karigarReg").style.display="block";
+}
+});
+}
+
+function registerKarigar(){
+let file=document.getElementById("kphoto").files[0];
+let ref=storage.ref("karigars/"+Date.now());
+ref.put(file).then(s=>{
+s.ref.getDownloadURL().then(url=>{
+db.collection("karigars").add({
+name:kname.value,
+cat:kcat.value,
+photo:url,
+lat:userLat,
+lng:userLng,
+status:"Pending"
+});
+alert("Registration sent");
+});
+});
+}
+
+function loadPending(){
+db.collection("karigars").where("status","==","Pending")
+.onSnapshot(snap=>{
+let h="";
+snap.forEach(d=>{
+let w=d.data();
+h+=`<div>${w.name} - ${w.cat} 
+<button onclick="approve('${d.id}')">Approve</button></div>`;
+});
+pending.innerHTML=h;
+});
+}
+
+function approve(id){
+db.collection("karigars").doc(id).update({status:"Approved"});
+}
+
+navigator.geolocation.getCurrentPosition(p=>{
+userLat=p.coords.latitude;
+userLng=p.coords.longitude;
+locTxt.innerHTML="Ahmedabad + Gujarat Active";
+
+let map=new google.maps.Map(map,{
+center:{lat:userLat,lng:userLng},zoom:13
+});
+new google.maps.Marker({position:{lat:userLat,lng:userLng},map});
+});
+</script>
+
+</body>
+  </html>
 
