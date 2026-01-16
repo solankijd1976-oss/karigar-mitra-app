@@ -2,56 +2,73 @@
 <html lang="gu">
 <head>
 <meta charset="UTF-8">
-<title>કારીગર મિત્ર</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>કારીગર મિત્ર – Gujarat Service App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6fb}
-header{background:#1976d2;color:white;padding:15px;text-align:center;font-size:20px}
-.card{background:white;border-radius:12px;padding:15px;margin:10px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-.btn{background:#1976d2;color:white;border:none;padding:10px 15px;border-radius:8px;width:100%}
-input,select{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ccc}
+body{margin:0;font-family:Arial;background:#f1f5f9}
+header{background:#0f172a;color:white;padding:15px;text-align:center;font-size:22px}
+.section{padding:15px}
+input,select,button{width:100%;padding:12px;margin-top:10px;border-radius:6px;border:1px solid #ccc}
+button{background:#0ea5e9;color:white;font-size:16px;border:none}
+.card{background:white;padding:15px;border-radius:10px;margin-bottom:10px;box-shadow:0 0 5px #ccc}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.cat{padding:15px;border-radius:12px;color:white;text-align:center;font-weight:bold}
+.category{padding:15px;color:white;border-radius:10px;font-weight:bold;text-align:center}
+.hidden{display:none}
 </style>
 </head>
+
 <body>
 
-<header>🛠️ કારીગર મિત્ર</header>
+<header>કારીગર મિત્ર – Gujarat</header>
 
-<div id="app">
-
-<div class="card">
-<h3>🔐 Login / Register</h3>
-<input id="phone" placeholder="મોબાઈલ નંબર">
-<button class="btn" onclick="login()">Login</button>
+<div class="section" id="home">
+  <button onclick="showRegister()">🧑‍🔧 કારીગર રજીસ્ટ્રેશન</button>
+  <button onclick="showSearch()">🔍 કારીગર શોધો</button>
 </div>
 
-<div class="card">
-<h3>👨‍🔧 Register as Karigar</h3>
-<input id="name" placeholder="નામ">
-<select id="category">
-<option>Plumber</option>
-<option>Electrician</option>
-<option>Carpenter</option>
-<option>Painter</option>
-<option>AC Repair</option>
-</select>
-<input type="file" id="photo">
-<button class="btn" onclick="register()">Register</button>
+<div class="section hidden" id="register">
+  <div class="card">
+    <h3>કારીગર રજીસ્ટ્રેશન</h3>
+    <input id="name" placeholder="નામ">
+    <input id="phone" placeholder="મોબાઈલ નંબર">
+    <input id="city" placeholder="શહેર / ગામ">
+    <select id="category">
+      <option>ઇલેક્ટ્રીશિયન</option>
+      <option>પ્લમ્બર</option>
+      <option>CCTV ઇન્સ્ટોલેશન</option>
+      <option>માલ સામાન હેરફેર</option>
+      <option>સુથારી કામ</option>
+      <option>AC ફ્રીઝ રીપેરીંગ</option>
+      <option>મિકેનિક</option>
+      <option>કમ્પ્યુટર એન્જિ.</option>
+      <option>કલર કામ</option>
+      <option>સફાઈ કામ</option>
+      <option>લાદી ટાઈલ્સ કામ</option>
+      <option>વેલ્ડિંગ કામ</option>
+      <option>પેસ્ટ કંટ્રોલ</option>
+      <option>ટીવી રીપેરીંગ</option>
+      <option>ગ્લાસ ફિટિંગ</option>
+      <option>બારી બારણા ફિટિંગ</option>
+    </select>
+    <button onclick="saveWorker()">રજીસ્ટર કરો</button>
+    <button onclick="goHome()">⬅ પાછા</button>
+  </div>
 </div>
 
-<div class="card">
-<h3>🔎 Find Karigar</h3>
-<div class="grid" id="cats"></div>
-</div>
-
+<div class="section hidden" id="search">
+  <div class="card">
+    <h3>કેટેગરી પસંદ કરો</h3>
+    <div class="grid" id="categories"></div>
+    <button onclick="goHome()">⬅ પાછા</button>
+  </div>
+  <div id="result"></div>
 </div>
 
 <script>
@@ -59,41 +76,58 @@ const firebaseConfig = {
 apiKey: "AIzaSyCTk0sFvZmY6olGOHwK59z-TYoSSj8_l0o",
 authDomain: "karigar-mitra-9c6be.firebaseapp.com",
 projectId: "karigar-mitra-9c6be",
-storageBucket: "karigar-mitra-9c6be.appspot.com",
+storageBucket: "karigar-mitra-9c6be.firebasestorage.app",
 messagingSenderId: "929574636222",
 appId: "1:929574636222:web:085bb87b1d021e0c422cef"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-const storage=firebase.storage();
+const db = firebase.firestore();
 
-function login(){
-alert("OTP system can be added next step");
+const CATEGORIES=[
+'ઇલેક્ટ્રીશિયન','પ્લમ્બર','CCTV ઇન્સ્ટોલેશન','માલ સામાન હેરફેર','સુથારી કામ',
+'AC ફ્રીઝ રીપેરીંગ','મિકેનિક','કમ્પ્યુટર એન્જિ.','કલર કામ','સફાઈ કામ',
+'લાદી ટાઈલ્સ કામ','વેલ્ડિંગ કામ','પેસ્ટ કંટ્રોલ','ટીવી રીપેરીંગ','ગ્લાસ ફિટિંગ','બારી બારણા ફિટિંગ'
+];
+
+function showRegister(){hideAll();register.classList.remove('hidden')}
+function showSearch(){hideAll();search.classList.remove('hidden')}
+function goHome(){hideAll();home.classList.remove('hidden')}
+function hideAll(){home.classList.add('hidden');register.classList.add('hidden');search.classList.add('hidden')}
+
+function saveWorker(){
+db.collection("workers").add({
+name:name.value,
+phone:phone.value,
+city:city.value,
+category:category.value
+});
+alert("રજીસ્ટ્રેશન સફળ");
+goHome();
 }
 
-function register(){
-let name=document.getElementById("name").value;
-let cat=document.getElementById("category").value;
-let file=document.getElementById("photo").files[0];
-
-let ref=storage.ref("karigars/"+Date.now()+".jpg");
-ref.put(file).then(snap=>{
-snap.ref.getDownloadURL().then(url=>{
-db.collection("karigars").add({name,cat,photo:url});
-alert("Registered Successfully");
-});
-});
-}
-
-let colors=["#e91e63","#9c27b0","#3f51b5","#009688","#ff9800"];
-["Plumber","Electrician","Carpenter","Painter","AC Repair"].forEach((c,i)=>{
+const catDiv=document.getElementById("categories");
+CATEGORIES.forEach(c=>{
 let d=document.createElement("div");
-d.className="cat";
-d.style.background=colors[i];
-d.innerHTML=c;
-d.onclick=()=>alert("Search "+c);
-document.getElementById("cats").appendChild(d);
+d.className="category";
+d.style.background="#0ea5e9";
+d.innerText=c;
+d.onclick=()=>loadWorkers(c);
+catDiv.appendChild(d);
 });
+
+function loadWorkers(cat){
+db.collection("workers").where("category","==",cat).get().then(s=>{
+result.innerHTML="";
+s.forEach(doc=>{
+let d=doc.data();
+result.innerHTML+=`<div class='card'>
+<b>${d.name}</b><br>
+📞 ${d.phone}<br>
+📍 ${d.city}
+</div>`;
+});
+});
+}
 </script>
 
 </body>
