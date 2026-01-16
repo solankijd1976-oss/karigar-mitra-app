@@ -1,134 +1,599 @@
 <!DOCTYPE html>
 <html lang="gu">
 <head>
-<meta charset="UTF-8">
-<title>કારીગર મિત્ર – Gujarat Service App</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-<style>
-body{margin:0;font-family:Arial;background:#f1f5f9}
-header{background:#0f172a;color:white;padding:15px;text-align:center;font-size:22px}
-.section{padding:15px}
-input,select,button{width:100%;padding:12px;margin-top:10px;border-radius:6px;border:1px solid #ccc}
-button{background:#0ea5e9;color:white;font-size:16px;border:none}
-.card{background:white;padding:15px;border-radius:10px;margin-bottom:10px;box-shadow:0 0 5px #ccc}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.category{padding:15px;color:white;border-radius:10px;font-weight:bold;text-align:center}
-.hidden{display:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>કારીગર મિત્ર | સ્માર્ટ હોમ સર્વિસીસ</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root { 
+            --primary: #1e40af; 
+            --dark: #0f172a; 
+            --success: #16a34a; 
+            --bg: #f8fafc; 
+            --star: #fbbf24; 
+        }
+        
+        /* DARK BLUE SPLASH/LOADING SCREEN */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a192f 0%, #1e3a8a 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            border: 5px solid rgba(59, 130, 246, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        .splash-logo i {
+            font-size: 50px;
+            color: #60a5fa;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(96, 165, 250, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
+        }
+        
+        .splash-text {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .splash-subtext {
+            font-size: 16px;
+            opacity: 0.8;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: #3b82f6;
+            animation: loading 2s ease-in-out forwards;
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        /* MAIN STYLES */
+        body { 
+            font-family: 'Segoe UI', 'Noto Sans Gujarati', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding-bottom: 80px;
+            display: none; /* Initially hidden */
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, var(--primary), #1e3a8a); 
+            color: white; 
+            padding: 20px 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 20px;
+            position: sticky; 
+            top:0; 
+            z-index:100; 
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+        }
+        
+        .tab-nav { 
+            display: flex; 
+            background: white; 
+            border-bottom: 1px solid #ddd; 
+            position: sticky; 
+            top: 64px; 
+            z-index:99; 
+            overflow-x: auto; 
+            scrollbar-width: none; 
+        }
+        
+        .tab-btn { 
+            flex: 1; 
+            min-width: 90px; 
+            padding: 15px 10px; 
+            border: none; 
+            background: none; 
+            font-weight: bold; 
+            color: #666; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            font-size: 13px; 
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            background: #f0f7ff; 
+        }
+        
+        .section { 
+            display: none; 
+            padding: 20px 15px; 
+            animation: fadeIn 0.3s ease; 
+        }
+        
+        .active { 
+            display: block; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .grid { 
+                grid-template-columns: repeat(3, 1fr); 
+                gap: 20px;
+            }
+        }
+        
+        .cat-card { 
+            background: white; 
+            padding: 20px 15px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            cursor: pointer; 
+            border: 1px solid #e2e8f0; 
+            transition: all 0.3s ease;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .cat-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12); 
+            border-color: var(--primary);
+        }
+        
+        .cat-card i { 
+            font-size: 32px; 
+            color: var(--primary); 
+            margin-bottom: 12px; 
+        }
+        
+        .order-box { 
+            background: white; 
+            padding: 18px; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            border-left: 5px solid var(--primary); 
+            position: relative; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06); 
+            overflow: hidden; 
+            transition: transform 0.2s;
+        }
+        
+        .order-box:hover {
+            transform: translateX(5px);
+        }
+        
+        .worker-img { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            float: left; 
+            margin-right: 15px; 
+            border: 3px solid #e2e8f0; 
+        }
+        
+        .rating-stars { 
+            color: var(--star); 
+            font-size: 14px; 
+            margin-top: 5px; 
+            font-weight: bold; 
+        }
+        
+        .dist-badge { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            font-size: 12px; 
+            background: #dcfce7; 
+            color: #166534; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 15px; 
+            font-size: 15px; 
+            transition: all 0.3s;
+        }
+        
+        .btn-main { 
+            background: linear-gradient(to right, var(--primary), #3b82f6); 
+            color: white; 
+        }
+        
+        .btn-main:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-status { 
+            width: auto; 
+            padding: 8px 15px; 
+            font-size: 12px; 
+            margin-top: 5px; 
+            margin-right: 8px;
+            border-radius: 8px;
+        }
+        
+        input, textarea, select { 
+            width:100%; 
+            padding:14px; 
+            margin:10px 0; 
+            border: 1px solid #ddd; 
+            border-radius:10px; 
+            box-sizing: border-box; 
+            font-size: 15px; 
+            font-family: inherit;
+            transition: border 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top:0; 
+            left:0; 
+            width:100%; 
+            height:100%; 
+            background:rgba(0,0,0,0.7); 
+            z-index:1000; 
+            overflow-y: auto;
+        }
+        
+        .modal-content { 
+            background:white; 
+            width:90%; 
+            max-width:450px; 
+            margin: 10vh auto; 
+            padding:30px; 
+            border-radius:20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: modalAppear 0.4s ease;
+        }
+        
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h3 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        hr {
+            margin:25px 0; 
+            border:0; 
+            border-top:1px solid #e2e8f0;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* Status colors */
+        .status-pending { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .status-approved { background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        
+        /* Location alert */
+        .loc-alert {
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+    </style>
 </head>
-
 <body>
 
-<header>કારીગર મિત્ર – Gujarat</header>
+    <!-- DARK BLUE SPLASH SCREEN -->
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <i class="fas fa-hands-helping"></i>
+        </div>
+        <div class="splash-text">કારીગર મિત્ર</div>
+        <div class="splash-subtext">સ્માર્ટ હોમ સર્વિસીસ એપ્લિકેશન</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
 
-<div class="section" id="home">
-  <button onclick="showRegister()">🧑‍🔧 કારીગર રજીસ્ટ્રેશન</button>
-  <button onclick="showSearch()">🔍 કારીગર શોધો</button>
-</div>
+    <!-- MAIN APP -->
+    <div class="header">કારીગર મિત્ર PRO</div>
 
-<div class="section hidden" id="register">
-  <div class="card">
-    <h3>કારીગર રજીસ્ટ્રેશન</h3>
-    <input id="name" placeholder="નામ">
-    <input id="phone" placeholder="મોબાઈલ નંબર">
-    <input id="city" placeholder="શહેર / ગામ">
-    <select id="category">
-      <option>ઇલેક્ટ્રીશિયન</option>
-      <option>પ્લમ્બર</option>
-      <option>CCTV ઇન્સ્ટોલેશન</option>
-      <option>માલ સામાન હેરફેર</option>
-      <option>સુથારી કામ</option>
-      <option>AC ફ્રીઝ રીપેરીંગ</option>
-      <option>મિકેનિક</option>
-      <option>કમ્પ્યુટર એન્જિ.</option>
-      <option>કલર કામ</option>
-      <option>સફાઈ કામ</option>
-      <option>લાદી ટાઈલ્સ કામ</option>
-      <option>વેલ્ડિંગ કામ</option>
-      <option>પેસ્ટ કંટ્રોલ</option>
-      <option>ટીવી રીપેરીંગ</option>
-      <option>ગ્લાસ ફિટિંગ</option>
-      <option>બારી બારણા ફિટિંગ</option>
-    </select>
-    <button onclick="saveWorker()">રજીસ્ટર કરો</button>
-    <button onclick="goHome()">⬅ પાછા</button>
-  </div>
-</div>
+    <div class="tab-nav">
+        <button id="t-user" class="tab-btn active" onclick="showTab('user')"><i class="fas fa-home"></i> ગ્રાહક</button>
+        <button id="t-reg" class="tab-btn" onclick="showTab('reg')"><i class="fas fa-user-plus"></i> જોડાવો</button>
+        <button id="t-admin" class="tab-btn" onclick="showTab('admin')"><i class="fas fa-tools"></i> ઓર્ડર</button>
+        <button id="t-super" class="tab-btn" onclick="checkAdminPass()"><i class="fas fa-user-shield"></i> એડમિન</button>
+    </div>
 
-<div class="section hidden" id="search">
-  <div class="card">
-    <h3>કેટેગરી પસંદ કરો</h3>
-    <div class="grid" id="categories"></div>
-    <button onclick="goHome()">⬅ પાછા</button>
-  </div>
-  <div id="result"></div>
-</div>
+    <!-- USER TAB -->
+    <div id="user-sec" class="section active">
+        <div class="loc-alert" id="loc-alert">
+            <i class="fas fa-map-marker-alt"></i> લોકેશન તપાસી રહ્યા છીએ...
+        </div>
+        
+        <h3><i class="fas fa-th-large"></i> સેવાઓ પસંદ કરો</h3>
+        <div class="grid" id="cat-grid"></div>
+        
+        <hr>
+        
+        <h3><i class="fas fa-history"></i> તાજેતરના ઓર્ડર</h3>
+        <div id="user-orders">
+            <div style="text-align:center; padding:30px; color:#666;">
+                <i class="fas fa-sync-alt fa-spin"></i><br>
+                લોડ થઈ રહ્યું છે...
+            </div>
+        </div>
+    </div>
 
-<script>
-const firebaseConfig = {
-apiKey: "AIzaSyCTk0sFvZmY6olGOHwK59z-TYoSSj8_l0o",
-authDomain: "karigar-mitra-9c6be.firebaseapp.com",
-projectId: "karigar-mitra-9c6be",
-storageBucket: "karigar-mitra-9c6be.firebasestorage.app",
-messagingSenderId: "929574636222",
-appId: "1:929574636222:web:085bb87b1d021e0c422cef"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    <!-- REGISTRATION TAB -->
+    <div id="reg-sec" class="section">
+        <h3><i class="fas fa-user-check"></i> નવી નોંધણી (કારીગર)</h3>
+        <input type="text" id="wName" placeholder="તમારું પૂરું નામ *" required>
+        <input type="tel" id="wPhone" placeholder="મોબાઈલ નંબર * (10 અંક)" required pattern="[0-9]{10}">
+        <input type="text" id="wPhoto" placeholder="તમારા ફોટાની લિંક (URL)">
+        <small style="color:#666; display:block; margin-bottom:10px;">જો ન હોય તો ખાલી છોડો</small>
+        <select id="wCat" required>
+            <option value="">કેટેગરી પસંદ કરો *</option>
+        </select>
+        <button class="btn btn-main" onclick="registerWorker()">
+            <i class="fas fa-paper-plane"></i> અરજી કરો
+        </button>
+    </div>
 
-const CATEGORIES=[
-'ઇલેક્ટ્રીશિયન','પ્લમ્બર','CCTV ઇન્સ્ટોલેશન','માલ સામાન હેરફેર','સુથારી કામ',
-'AC ફ્રીઝ રીપેરીંગ','મિકેનિક','કમ્પ્યુટર એન્જિ.','કલર કામ','સફાઈ કામ',
-'લાદી ટાઈલ્સ કામ','વેલ્ડિંગ કામ','પેસ્ટ કંટ્રોલ','ટીવી રીપેરીંગ','ગ્લાસ ફિટિંગ','બારી બારણા ફિટિંગ'
-];
+    <!-- ADMIN ORDERS TAB -->
+    <div id="admin-sec" class="section">
+        <h3><i class="fas fa-map-marker-alt"></i> નજીકના ઓર્ડર (10 કિ.મી.માં)</h3>
+        <div id="admin-orders">
+            <div style="text-align:center; padding:30px; color:#666;">
+                <i class="fas fa-sync-alt fa-spin"></i><br>
+                ઓર્ડર લોડ થઈ રહ્યા છે...
+            </div>
+        </div>
+    </div>
 
-function showRegister(){hideAll();register.classList.remove('hidden')}
-function showSearch(){hideAll();search.classList.remove('hidden')}
-function goHome(){hideAll();home.classList.remove('hidden')}
-function hideAll(){home.classList.add('hidden');register.classList.add('hidden');search.classList.add('hidden')}
+    <!-- SUPER ADMIN TAB -->
+    <div id="super-sec" class="section">
+        <h4><i class="fas fa-clock"></i> પેન્ડિંગ અરજીઓ</h4>
+        <div id="pending-workers">
+            <div style="text-align:center; padding:20px; color:#666;">
+                લોડ થઈ રહ્યું છે...
+            </div>
+        </div>
+        
+        <h4><i class="fas fa-check-circle"></i> મંજૂર કારીગરો</h4>
+        <div id="approved-workers">
+            <div style="text-align:center; padding:20px; color:#666;">
+                લોડ થઈ રહ્યું છે...
+            </div>
+        </div>
+    </div>
 
-function saveWorker(){
-db.collection("workers").add({
-name:name.value,
-phone:phone.value,
-city:city.value,
-category:category.value
-});
-alert("રજીસ્ટ્રેશન સફળ");
-goHome();
-}
+    <!-- BOOKING MODAL -->
+    <div id="book-modal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 id="svc-name" style="margin:0; color:var(--primary);">બુકિંગ</h3>
+                <button onclick="closeModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+            </div>
+            
+            <input type="text" id="cName" placeholder="તમારું નામ *" required>
+            <input type="tel" id="cPhone" placeholder="મોબાઈલ નંબર *" required maxlength="10">
+            <textarea id="cAddr" placeholder="પૂરું સરનામું *" rows="3" required></textarea>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-main" onclick="saveOrder()" style="flex:2;">
+                    <i class="fas fa-check-circle"></i> બુકિંગ કન્ફર્મ કરો
+                </button>
+                <button onclick="closeModal()" class="btn" style="flex:1; background:#f1f5f9; color:#64748b;">
+                    રદ કરો
+                </button>
+            </div>
+        </div>
+    </div>
 
-const catDiv=document.getElementById("categories");
-CATEGORIES.forEach(c=>{
-let d=document.createElement("div");
-d.className="category";
-d.style.background="#0ea5e9";
-d.innerText=c;
-d.onclick=()=>loadWorkers(c);
-catDiv.appendChild(d);
-});
+    <script>
+        // ==================== CONFIGURATION ====================
+        
+        // Remove splash screen after loading
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.body.style.display = 'block';
+            }, 500);
+        }, 2000);
+        
+        // Categories Data (Fixed)
+        const categories = [
+            {n:'ઇલેક્ટ્રીશિયન', i:'bolt'},
+            {n:'પ્લમ્બર', i:'faucet'},
+            {n:'CCTV ઇન્સ્ટોલેશન', i:'video'},
+            {n:'માલ સામાન હેરફેર', i:'truck'},
+            {n:'સુથારી કામ', i:'hammer'},
+            {n:'AC રીપેરીંગ', i:'snowflake'},
+            {n:'મિકેનિક', i:'wrench'},
+            {n:'કમ્પ્યુટર એન્જિનિયર', i:'laptop'},
+            {n:'પેઇન્ટર', i:'paint-brush'},
+            {n:'સફાઈ કામ', i:'broom'},
+            {n:'ટાઈલ્સ કામ', i:'th-large'},
+            {n:'વેલ્ડિંગ કામ', i:'fire'},
+            {n:'પેસ્ટ કંટ્રોલ', i:'bug'},
+            {n:'ટીવી રીપેરીંગ', i:'tv'},
+            {n:'ગ્લાસ ફિટિંગ', i:'window-maximize'},
+            {n:'બારી-બારણાં ફિટિંગ', i:'door-open'}
+        ];
+        
+        // App State
+        let userLoc = null;
+        let selectedSvc = "";
+        let firebaseInitialized = false;
 
-function loadWorkers(cat){
-db.collection("workers").where("category","==",cat).get().then(s=>{
-result.innerHTML="";
-s.forEach(doc=>{
-let d=doc.data();
-result.innerHTML+=`<div class='card'>
-<b>${d.name}</b><br>
-📞 ${d.phone}<br>
-📍 ${d.city}
-</div>`;
-});
-});
-}
-</script>
+        // ==================== INITIALIZATION ====================
+        function initApp() {
+            // Initialize categories
+            const grid = document.getElementById('cat-grid');
+            const select = document.getElementById('wCat');
+            
+            grid.innerHTML = '';
+            select.innerHTML = '<option value="">કેટેગરી પસંદ કરો *</option>';
+            
+            categories.forEach(c => {
+                grid.innerHTML += `
+                    <div class="cat-card" onclick="openModal('${c.n}')">
+                        <i class="fas fa-${c.i}"></i>
+                        <br>
+                        <b>${c.n}</b>
+                    </div>`;
+                    
+                select.innerHTML += `<option value="${c.n}">${c.n}</option>`;
+            });
+            
+            // Get user location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLoc = { 
+                            lat: position.coords.latitude, 
+                            lng: position.coords.longitude 
+                        };
+                        document.getElementById('loc-alert').innerHTML = 
+                            '<i class="fas fa-check-circle"></i> લોકેશન મળી ગયું! તમે હવે નજીકના કારીગરો શોધી શકો છો.';
+                        document.getElementById('loc-alert').style.background = '#dcfce7';
+                        document.getElementById('loc-alert').style.color = '#166534';
+                    },
+                    (error) => {
+                        console.log('Location error:', error);
+                        document.getElementById('loc-alert').innerHTML = 
+                            '<i class="fas fa-exclamation-triangle"></i> લોકેશન મેળવવામાં ભૂલ. મેન્યુઅલી શહેર દાખલ કરો.';
+                        document.getElementById('loc-alert').style.background = '#fef3c7';
+                        document.getElementById('loc-alert').style.color = '#92400e';
+                    }
+                );
+            }
+        }
 
-</body>
-</html>
+        // ==================== UI FUNCTIONS ====================
+        function showTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(tabName + '-sec').classList.add('active');
+            
+            // Activate selected tab
+            document.getElementById('t-' + tabName).classList.add('active');
+        }
+
+        function openModal(serviceName) {
+            selectedSvc = serviceName;
+            document.getElementById('svc-name').innerText = serviceName + " - બુકિંગ";
+            document.getElementById('book-modal').style.display = 'block';
+            
+            // Clear form
+            document.getElementById('cName').value = '';
+            document.getElementById('cPhone').value = 
