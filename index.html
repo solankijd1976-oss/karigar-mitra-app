@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="gu">
-<head>
+<base href="./">
+  <base href="./">
+ <head> 
+     <meta name="theme-color" content="#1e40af">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4230/4230686.png"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>કારીગર મિત્ર | સ્માર્ટ હોમ સર્વિસીસ</title>
@@ -424,7 +428,16 @@
     </div>
 
     <!-- REGISTRATION TAB -->
-    <div id="reg-sec" class="section">
+    <div id="reg-sec" class="section"> 
+        const db = firebase.firestore();
+const snap = await db.collection("workers")
+    .where("phone", "==", phone)
+    .get();
+
+if (!snap.empty) {
+    showAlert("ભૂલ", "આ નંબરથી પહેલેથી નોંધણી થઈ ગઈ છે.", "error");
+    return;
+}
         <h3><i class="fas fa-user-check"></i> નવી નોંધણી (કારીગર)</h3>
         <input type="text" id="wName" placeholder="તમારું પૂરું નામ *" required>
         <input type="tel" id="wPhone" placeholder="મોબાઈલ નંબર * (10 અંક)" required pattern="[0-9]{10}">
@@ -511,7 +524,7 @@
             {n:'AC રીપેરીંગ', i:'snowflake'},
             {n:'મિકેનિક', i:'wrench'},
             {n:'કમ્પ્યુટર એન્જિનિયર', i:'laptop'},
-            {n:'પેઇન્ટર', i:'paint-brush'},
+            { {n:'પેઇન્ટર', i:'paint-roller'},
             {n:'સફાઈ કામ', i:'broom'},
             {n:'ટાઈલ્સ કામ', i:'th-large'},
             {n:'વેલ્ડિંગ કામ', i:'fire'},
@@ -752,7 +765,7 @@
                 cancelButtonText: 'રદ કરો'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    if (result.value === "1234") {
+                    if (result.value === "19761976") {
                         showTab('super');
                         showAlert("સફળ લૉગિન", "એડમિન પેનલમાં સ્વાગત છે!", "success");
                     } else if (result.value) {
